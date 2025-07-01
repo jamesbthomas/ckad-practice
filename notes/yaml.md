@@ -55,3 +55,50 @@ spec:
       image: <the name of the image to use in the container repository>
 ```
 The containers label is a dictionary, so creating a pod with multiple containers just means adding another set of name and image tags. Be sure to include the `-`, which indicates that it's a new dictionary item and not a continuation of the previous one
+
+#### env
+sets environment variables for the pod
+array of values, so use `-` to highlight different items
+generally have `name` and `value` properties to specify it in a plain K-V format
+Can also use configmaps and secrets to create environment variables, which use `valueFrom` instead of `value` and have a sub-element called `configMapKeyRef` or `secretKeyRef`, respectively
+to add a complete configmap, use `envFrom` instead of `env`, and `configMapKeyRef`, etc.
+```
+spec:
+  containers:
+    env:
+      - name: <name>
+      valueFrom:
+        configMapKeyRef:
+          name: <name of the config map>
+          key: <key in the config map>
+
+spec:
+  containers:
+    env:
+      - name: <name>
+      valueFrom:
+        secretKeyRef:
+          name: <name of the secret>
+          key: <key in the secret>
+
+spec:
+  containers:
+    envFrom:
+      configMapKeyRef:
+        name: <name of the config map>
+        
+spec:
+  containers:
+    envFrom:
+      secretRef:
+        name: <name of the secret>
+```
+#### service accounts
+by default, mounts the default service account for the namespace in every container
+- `automountServiceAccountToken: false` disables this behavior
+to add a service account token to a container, add `serviceAccountName: <name of the account>`
+
+```
+spec:
+  serviceAccountName: <name>
+```

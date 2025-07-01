@@ -53,7 +53,7 @@ there is a "default" namespace that everything uses unless explicitly identified
 can also set the namespace for the current context
 
 ## Resource Quotas
-allow resource limiting within a namespace
+allow resource limiting within a namespace, defining max/min for all pods together in the namespace
 defined via yaml files
 - apiVersion: v1
 - kind: ResourceQuota
@@ -68,3 +68,123 @@ defined via yaml files
     - limits.cpu - upper limit on CPU usage, measured in CPU units
     - limits.memory - same but for memory, measured in GB; i.e., `10Gi` sets a 10GB limit
 
+# Resource Requests
+used by the kube scheduler to find the right node to start a pod on
+measured the same way as Resource Quotas, but specified differently in the yaml
+- ResourceQuota is a kubernetes object that allows Resource Requests to be standardized across a deployment
+despite the name, can only include upper limits
+```
+spec:
+  containers:
+    resources:
+      requests:
+        memory: "<memory request>" # measured in bytes
+        cpu: <num> # measured in CPU units aka CPU cores
+      limitsL
+        memory:
+        cpu:
+```
+
+CPU is hard limited - pods can never use more CPU than they are assigned
+Memory is soft limited - pods can use more memory than they are assigned, but will crash and run out of memory
+requests = limits if requests are not specified
+recommended approach is to use requests but not limits - make sure there's enough for everyone, but don't let anything go unused
+
+## CPU units
+as low as 0.1 - aka 100m or 100 milliunits
+1 CPU unit is equivalent to 1 vCPU in AWS, 1 core in GCP, 1 core in Azure, 1 hyperthread (in other ecosystems)
+## Memory units
+measured in bytes, both gigi and giga
+gigabytes - rounded, equal to 1 trillion bytes; indicated by the unit G
+gibibytes - not rounded, equal to 1 trillion, 73 million 741 thousand eight hundred and 24 bytes; indicated by Gi
+similar metrics for Mega/Mebibytes and Kilo/Kibibytes
+
+# LimitRange
+kubernetes object that works at the namespace level that provides default limits and default requests
+limits are enforced when the pods are created - so if you change the limits have to redeploy the pods
+
+```
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: <object name>
+spec:
+  limits:
+  - default:
+      cpu:
+      memory:
+    defaultRequest:
+      cpu:
+      memory:
+    max:
+      cpu:
+      memory:
+    min:
+      cpu:
+      memory:
+    type: Container
+```
+
+# ConfigMaps
+used to track Key Value Pairs across pods from a central location instead of in each pods definition file
+can create imperatively or declaratively
+## Imperative Definition
+`kubectl create configmap <name of the config map> --from-literal=<name>=<value>`
+repeat the --from-literal section multiple times if necessary
+can also use `--from-file=<path>` to create it imperatively from a file
+## Declarative Definition
+uses a definition file iin YAML
+- apiVersion: v1
+- kind: ConfigMap
+- metadata:
+  - name: <name for the map>
+- data - specifies all of the key value pairs you want added to the configmap
+  - <name> : <value>
+
+# Secrets
+like config maps, but for data that you don't want in plaintext
+- not a secure solution, but kubernetes handles secrets more securely than configmaps
+doesn't actually secure the data, as it just base64 encodes it
+other projects and services have tools to manage secrets more securely
+- HashiCorp Vault or AWS Secrets Manager
+- the Sealed Secrets project
+- encrypting the filesystem and applying RBAC to the etcd data store (see kubernetes documentation for encryption at rest in etcd)
+can be created imperatively or declaratively
+when mounted as a volume, the key-value pairs are translated to file names as the key and contents as the value
+anyone with access to create pods/deployments/ReplicaSets in a namespace can view the secrets
+all values in a declaratively defined secret must be base64 encoded
+## Imperative
+same format, but instead of create configmap you use create secret generic
+## Declarative
+definition file with the same format, but instead of storing plaintext values you generate base64-encoded representations of the values
+## Linux Encoding
+`echo -n 'value' | base64 `
+use the `--decode` option to the base64 module to decode the value
+
+# Security Context
+implements key security/privilege management features for containers, but in a way that takes advantage of centralized management and orchestration
+can be set at the pod level
+```
+spec:
+  securityContext:
+    runAsUser: <uid to run as>
+  containers:
+    ...
+```
+or at the container level
+```
+spec:
+  containers:
+    - securityContext:
+        runAsUser: <uid to run as>
+        capabilities:
+          add: ["<linux user capability>"]
+      ...
+```
+The capabilities item is only supported at the container level,not at the pod level
+
+# Service Accounts
+accounts used by machines
+creates a service account object, then creates a token and stores it in a secret object, then associates that secret object with the service account object
+once created, you can copy the token out and use a third party application to access the kubernetes API
+can also mount the secret directly to containers in the cluster
