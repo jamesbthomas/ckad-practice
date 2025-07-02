@@ -188,3 +188,80 @@ accounts used by machines
 creates a service account object, then creates a token and stores it in a secret object, then associates that secret object with the service account object
 once created, you can copy the token out and use a third party application to access the kubernetes API
 can also mount the secret directly to containers in the cluster
+
+# Taints and Tolerations
+used to specify how pods are applied to nodes
+- taint: a repulsive characteristic set on nodes
+- toleration: ability to ignore certain taints placed on pods
+two part implementation
+- applying taints to nodes prevents any hosts without the appropriate toleration from being scheduled on that node
+- if no tolerations applied, no pods get put on tainted nodes
+Doesn't ensure a pod will be placed on a specific node, just protects a node for a specific app.
+## Tainting
+imperative only
+`kubectl taint nodes node-name key=value:taint-effect`
+taint-effect tells the scheduler how to handle pods that aren't tolerant to that taint
+- NoSchedule: prevents pods from being scheduled on the tainted host
+- PreferNoSchedule: system will try to avoid scheduling on the tainted node, but not guaranteed
+- NoExecute: new pods will not be scheduled, but existing pods will be evicted if they don't tolerate the taint
+  - when re-scheduling in response to a NoExecute taint, pods are killed and then rescheduled if their pod definition requires it
+## Tolerating
+declarative only
+new spec sub-element called tolerations, each item includes a key, operator, value, and effect
+```
+spec:
+  tolerations:
+  - key: "<name of the toleration, should match the taint command>"
+    operator: "="
+    value: "<value from the taint command>"
+    effect: "<one of the effect values>"
+```
+
+quotes around all 4 values are required
+
+# Node Affinity
+inverse of taints and tolerations which protects nodes for certain pods, node affinity protects pods for certain nodes
+more complex than node selectors, but also provides more powerful selections
+## Pod Definition
+still a spec sub-element
+```
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: <label key>
+            operator: <kind of operator>
+            values:
+            - <list of values>
+```
+multiple operators, but most common is "In"
+- can also do "NotIn"
+- "Exists" - doesn't need the values item
+can add additional values to match multiple labels, include the `-` to denote that it's a new element in the array
+## Types of Node Affinity
+two types in use now, a third planned
+- requiredDuringSchedulingIgnoredDuringExecution:
+  - during scheduling, before pod starts, the pod can only be put on nodes with matching affinity. will not schedule pod without matching node affinity
+  - ignored after scheduling, once the pod is running, so if the node affinity changes the pod will keep running
+- preferredDuringSchedulingIgnoredDuringExecution
+  - before pod starts, the pod will prefer to be put on matching affinity nodes, but will put the pod in execution on any node if it cant find a matching affinity
+  - 
+- (planned) requiredDuringSchedulingRequiredDuringExecution
+  - requiredDuringExecution will evict pods on any node whenever affinity changes, even if the pod is already running
+# Node Selectors
+older technique replaced by node affinity
+uses labels assigned to the nodes and in the pod definition to match pods to the nodes that should run them
+have to label nodes first, then create the pod
+only allows for simple matchings - i.e., can't do label1 OR label2, can't do NOT label3
+## Label Node
+`kubectl label nodes <node name> <label key>=<label value>`
+key should be size, value can be whatever you want as long as it matches your pod definition
+## Create Pod
+another spec sub-element
+```
+spec:
+  nodeSelector:
+    size: <label value>
+```

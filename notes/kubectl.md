@@ -38,6 +38,16 @@ increases the number of replicas that the ReplicaSet will have
 sets the context name space to the given namespace
 allows the use of kubectl commands against a non-default namespace without the use of the --namespace flag
 
+### `kubectl apply -f <definition file>`
+applies an updated configuration file for appropriate objects
+most useful when dealing with deployments and you need to trigger an update
+
+### `kubectl rollout undo <deployment name>`
+triggers a rollback on the named deployment
+
+### `kubectl logs <pod name>`
+gets the logs from the selected pod, including stdout
+
 ## Switches
 ### `--namespace=<namespace>`
 - also `-ns=<namespace>`
@@ -53,4 +63,7 @@ formats:
 useful when dealing with declarative commands (where actions are based on a given file)
 useful locations:
 - client - does nothing with the action; checks the command and file locally and tells you if its right and if you can create the resource
+### `--selector <key>=<value>`
+filters output based on applied labels
+multiple k-v pairs can be put in the same command, should be comma separated with no white space
 
