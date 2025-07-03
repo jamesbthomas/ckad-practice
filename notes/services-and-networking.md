@@ -132,3 +132,53 @@ spec:
   - host: <second host>
   ...
 ```
+
+# Network Policies
+defined from pod-perspective
+- ingress = going into the pod
+- egress = going out of the pod
+rules are stateful, so responses dont need to be accounted for
+pods, nodes, and services all have their own IP addresses
+kubernetes assumes and assures that all pods should be able to communicate with all other pods in the cluster
+- default allow rule
+Network Policy objects are linked to pods and implement ingress/egress filtering rules
+- can filter layer3 and layer4
+- uses a `podSelector` field in the network policy that matches pod labels
+```
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: <policy name>
+spec:
+  podSelector: ## selects which pods to apply the policy to
+    matchLabels:
+      <key>: <value>
+  policyTypes:
+  - <Ingress or Egress> ## to filter both, put a second item for Egress
+  ingress: ## or egress
+  - from:  ## selects which pods to filter traffic from
+  ## will be to if under and egress item
+    - podSelector:
+        matchLabels:
+          <key>: <value>
+      namespaceSelector: ## when used alone, can restrict communication between namespaces
+        matchLabels:
+          <key>: <value>
+    - ipBlock: ## can control communication with hosts outside of the kubernetes cluster
+        cidr: <cidr notation with subnet mask>
+  ports:
+  - protocol: <TCP or UDP>
+  -  port: <port number>
+```
+multiple rules are OR'ed - indicated by the separate elements (`-`) under the from item
+multiple selectors in the same rule are AND'ed- indicated by not separate elements (no `-`) under the from them
+
+not all kubernetes network solutions support network policies.
+specifically:
+- Kube-router - DOES
+- Calico - DOES
+- Romana - DOES
+- Weave-net - DOES
+- Flannel - DOES NOT
+can still create policies if the network solution doesn't support network policies, but they just won't be enforced
+no error message or anything
