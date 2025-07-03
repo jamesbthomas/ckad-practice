@@ -96,4 +96,3 @@ spec:
       claimName: <name of the pvc object>
 ```
 this can also be added to ReplicaSets or Deployments in a similar manner
-test
