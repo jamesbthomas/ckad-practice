@@ -38,6 +38,9 @@ increases the number of replicas that the ReplicaSet will have
 sets the context name space to the given namespace
 allows the use of kubectl commands against a non-default namespace without the use of the --namespace flag
 
+### `kubectl config view`
+views the current kubeconfig file
+
 ### `kubectl apply -f <definition file>`
 applies an updated configuration file for appropriate objects
 most useful when dealing with deployments and you need to trigger an update
@@ -47,6 +50,10 @@ triggers a rollback on the named deployment
 
 ### `kubectl logs <pod name>`
 gets the logs from the selected pod, including stdout
+
+### `kubectl auth can-i <command>`
+used to check if you are allowed to perform an action, like create deployments or delete nodes
+can also check as another user by adding the `--as <username>`
 
 ## Switches
 ### `--namespace=<namespace>`
@@ -67,3 +74,7 @@ useful locations:
 filters output based on applied labels
 multiple k-v pairs can be put in the same command, should be comma separated with no white space
 
+# Other useful commands
+
+## `kube-apiserver -h | grep enable-admission-plugins`
+queries the API server for the list of enabled Admission Controllers

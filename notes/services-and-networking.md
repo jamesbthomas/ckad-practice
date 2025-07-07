@@ -137,7 +137,7 @@ spec:
 defined from pod-perspective
 - ingress = going into the pod
 - egress = going out of the pod
-rules are stateful, so responses dont need to be accounted for
+rules are stateful, so responses don't need to be accounted for
 pods, nodes, and services all have their own IP addresses
 kubernetes assumes and assures that all pods should be able to communicate with all other pods in the cluster
 - default allow rule
