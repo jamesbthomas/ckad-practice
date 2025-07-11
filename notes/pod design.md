@@ -80,10 +80,13 @@ metadata:
 spec:
   completions: <number of pods that need to end successfully>
   parallelism: <number of pods that can run at the same time>
+  backoffLimit: <number of times to retry before considering the job failed>
+  activeDeadlineSeconds: <maximum seconds to live before default failing>
   template:
     <pod definition for the job>
     spec:
-      ...
+      containers:
+      - ...
       restartPolicy: <Never|Always|OnFailure>
 ```
 
