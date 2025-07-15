@@ -80,7 +80,7 @@ spec:
       requests:
         memory: "<memory request>" # measured in bytes
         cpu: <num> # measured in CPU units aka CPU cores
-      limitsL
+      limits:
         memory:
         cpu:
 ```
